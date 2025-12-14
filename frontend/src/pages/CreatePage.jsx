@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../lib/axios' // Changed from axios
 import toast from 'react-hot-toast'
 import Navbar from '../components/Navbar'
 import { ArrowLeft } from 'lucide-react'
@@ -30,7 +30,7 @@ const CreatePage = () => {
 
     setLoading(true)
     try {
-      const res = await axios.post('http://localhost:5001/api/notes', formData)
+      const res = await api.post('/notes', formData) // Changed URL
       toast.success('Note created successfully!')
       navigate('/')
     } catch (error) {

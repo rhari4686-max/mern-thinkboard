@@ -2,31 +2,28 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PenSquare, Trash2 } from 'lucide-react'
 import { formatDate } from '../lib/utils.js'
-import axios from 'axios'
+import api from '../lib/axios' // Changed from axios
 import toast from 'react-hot-toast'
 
 const NoteCard = ({ note, onDelete }) => {
   const navigate = useNavigate()
 
   const handleEdit = (e) => {
-    e.preventDefault() // Prevent Link navigation
+    e.preventDefault()
     e.stopPropagation()
     navigate(`/note/${note._id}`)
   }
 
   const handleDelete = async (e) => {
-    e.preventDefault() // Prevent Link navigation
+    e.preventDefault()
     e.stopPropagation()
     
     if (window.confirm('Are you sure you want to delete this note?')) {
       try {
-        await axios.delete(`http://localhost:5001/api/notes/${note._id}`)
+        await api.delete(`/notes/${note._id}`) // Changed URL
         toast.success('Note deleted successfully!')
-        // Refresh the page or call parent's refresh function
         if (onDelete) {
           onDelete(note._id)
-        } else {
-          window.location.reload()
         }
       } catch (error) {
         console.error('Error deleting note:', error)
@@ -80,4 +77,4 @@ const NoteCard = ({ note, onDelete }) => {
   )
 }
 
-export default NoteCard
+export default NoteCard 
