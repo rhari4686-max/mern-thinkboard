@@ -1,116 +1,109 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import api from '../lib/axios' // Changed from axios
-import toast from 'react-hot-toast'
-import Navbar from '../components/Navbar'
-import { ArrowLeft } from 'lucide-react'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../lib/axios';
+import Navbar from '../components/Navbar';
+import ErrorToast from '../components/ErrorToast';
+import SuccessToast from '../components/SuccessToast';
 
 const CreatePage = () => {
-  const navigate = useNavigate()
-  const [formData, setFormData] = useState({
-    title: '',
-    content: ''
-  })
-  const [loading, setLoading] = useState(false)
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     
-    if (!formData.title || !formData.content) {
-      toast.error('Please fill in all fields')
-      return
+    // Validation
+    if (!title.trim() || !content.trim()) {
+      setError('Title and content are required');
+      return;
     }
 
-    setLoading(true)
     try {
-      const res = await api.post('/notes', formData) // Changed URL
-      toast.success('Note created successfully!')
-      navigate('/')
+      setLoading(true);
+      setError(null);
+      
+      await api.post('/notes', { title, content });
+      
+      setSuccess(true);
+      
+      // Dispatch custom event to notify HomePage
+      window.dispatchEvent(new Event('noteCreated'));
+      
+      // Navigate after short delay
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+      
     } catch (error) {
-      console.error('Error creating note:', error)
-      if (error.response?.status === 429) {
-        toast.error('Too many requests. Please wait a moment.')
-      } else {
-        toast.error('Failed to create note')
-      }
-    } finally {
-      setLoading(false)
+      console.error('Create note error:', error);
+      setError(error.message || 'Failed to create note');
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-base-200">
       <Navbar />
-      
-      <div className="max-w-4xl mx-auto p-6 mt-8">
-        <button 
-          onClick={() => navigate('/')}
-          className="btn btn-ghost gap-2 mb-6"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Notes
-        </button>
 
+      {error && <ErrorToast message={error} onClose={() => setError(null)} />}
+      {success && <SuccessToast message="Note created successfully!" onClose={() => setSuccess(false)} />}
+
+      <div className="max-w-2xl mx-auto p-4 mt-6">
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
-            <h2 className="card-title text-3xl mb-6 text-primary">
-              Create New Note
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="form-control">
+            <h2 className="card-title text-2xl mb-4">Create New Note</h2>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text text-lg font-semibold">Note Title</span>
+                  <span className="label-text">Title</span>
                 </label>
                 <input
                   type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Enter note title..."
-                  className="input input-bordered input-primary w-full"
+                  placeholder="Enter note title"
+                  className="input input-bordered w-full"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   disabled={loading}
+                  maxLength={100}
                 />
               </div>
 
-              <div className="form-control">
+              <div className="form-control mb-6">
                 <label className="label">
-                  <span className="label-text text-lg font-semibold">Content</span>
+                  <span className="label-text">Content</span>
                 </label>
                 <textarea
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  placeholder="Write your note here..."
-                  className="textarea textarea-bordered textarea-primary w-full h-64"
+                  placeholder="Enter note content"
+                  className="textarea textarea-bordered h-40"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
                   disabled={loading}
+                  maxLength={2000}
                 />
               </div>
 
-              <div className="card-actions justify-end gap-3 pt-4">
+              <div className="card-actions justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => navigate('/')}
                   className="btn btn-ghost"
+                  onClick={() => navigate('/')}
                   disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary px-8"
-                  disabled={loading}
+                  className="btn btn-primary"
+                  disabled={loading || !title.trim() || !content.trim()}
                 >
                   {loading ? (
                     <>
-                      <span className="loading loading-spinner loading-sm"></span>
+                      <span className="loading loading-spinner"></span>
                       Creating...
                     </>
                   ) : (
@@ -123,7 +116,7 @@ const CreatePage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CreatePage
+export default CreatePage;
